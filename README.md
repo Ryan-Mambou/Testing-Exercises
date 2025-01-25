@@ -3,5 +3,3 @@
 You can find the full course at:
 
 https://codewithmosh.com
-
-# Testing-Exercises
