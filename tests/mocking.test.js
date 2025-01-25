@@ -1,4 +1,4 @@
-import { vi, expect, it, describe, beforeEach } from "vitest";
+import { vi, expect, it, describe, beforeEach, afterEach } from "vitest";
 import {
   getPriceInCurrency,
   getShippingInfo,
@@ -11,6 +11,7 @@ import {
 } from "../src/mocking";
 import * as currencyModule from "../src/libs/currency";
 import * as emailModule from "../src/libs/email";
+import * as securityModule from "../src/libs/security";
 import { getShippingQuote } from "../src/libs/shipping";
 import { getExchangeRate } from "../src/libs/currency";
 import { trackPageView } from "../src/libs/analytics";
@@ -149,5 +150,53 @@ describe("signUp", () => {
     const result = await signUp(email);
     expect(result).toBe(false);
     expect(emailModule.sendEmail.mock.calls.length).toBe(0);
+  });
+});
+
+describe("login", () => {
+  it("should send an email with the security code", async () => {
+    const email = "ryanmambou@gmail.com";
+    await login(email);
+    expect(emailModule.sendEmail).toHaveBeenCalledTimes(1);
+    expect(emailModule.sendEmail).toHaveBeenCalledWith(
+      email,
+      expect.any(String)
+    );
+  });
+});
+
+describe("isOnline", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+  });
+  it("should return true if the current hour is within the available hours", () => {
+    const date = new Date(2025, 1, 25, 10); // 10 AM
+    vi.setSystemTime(date);
+    // vi.spyOn(global, "Date").mockImplementation(() => date); You could also do this
+    expect(isOnline()).toBe(true);
+  });
+
+  it("should return false if the current hour is outside the available hours", () => {
+    const date = new Date(2025, 1, 25, 21); // 9 PM
+    vi.setSystemTime(date);
+    expect(isOnline()).toBe(false);
+  });
+});
+
+describe("getDiscount", () => {
+  it("should return 0.2 if today is Christmas", () => {
+    const date = new Date(2025, 11, 25); // Christmas day
+    vi.setSystemTime(date);
+    expect(getDiscount()).toBe(0.2);
+  });
+
+  it("should return 0 if today is not Christmas", () => {
+    const date = new Date(2025, 11, 24); // Not Christmas day
+    vi.setSystemTime(date);
+    expect(getDiscount()).toBe(0);
   });
 });
